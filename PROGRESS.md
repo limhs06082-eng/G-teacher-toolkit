@@ -20,8 +20,8 @@ npm run verify
 | 2 | `features/lesson` 수업 진행판 | ✅ 완료 |
 | 3 | `features/quiz` 형성평가 | ✅ 완료 |
 | 4 | `features/task` 업무 체크리스트 | ✅ 완료 |
-| 5 | `features/message` 문구 템플릿 + api/refine | ⬜ **다음** |
-| 6 | 홈 + 설정·백업 + README | ⬜ |
+| 5 | `features/message` 문구 템플릿 + api/refine | ✅ 완료 |
+| 6 | 홈 + 설정·백업 + README | ⬜ **다음** |
 
 ## 지켜야 할 것
 
