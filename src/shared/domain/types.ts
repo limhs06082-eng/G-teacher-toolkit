@@ -104,6 +104,23 @@ export interface QuizResult {
   playedAt: string;
 }
 
+/**
+ * 진행 중인 퀴즈.
+ *
+ * 전자칠판은 새 창으로 열린다. 화면 안 state로 두면 칠판에서 아무것도 보이지 않는다.
+ * 수업 중 퀴즈는 칠판이 주 화면이므로 진행 상태를 저장한다.
+ */
+export interface QuizRun {
+  quizSetId: string;
+  questionIndex: number;
+  /** 문제 id → 맞힌 팀 이름 */
+  correctTeamsByQuestion: Record<string, string[]>;
+  /** 정답을 공개했는지 */
+  revealed: boolean;
+  teams: string[];
+  startedAt: string;
+}
+
 // ─────────────────────────────────────────────────────────────
 // 업무 체크리스트 (features/task)
 // ─────────────────────────────────────────────────────────────
@@ -184,6 +201,7 @@ export interface ToolkitData {
 
   quizSets: QuizSet[];
   quizResults: QuizResult[];
+  quizRun: QuizRun | null;
 
   tasks: TaskItem[];
 

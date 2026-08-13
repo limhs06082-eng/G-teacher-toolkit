@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { findFeature } from '../../app/navigation';
 import { BoardScreen, EmptyState } from '../../shared/ui';
 import { LessonBoard } from '../lesson/LessonBoard';
+import { QuizBoard } from '../quiz/QuizBoard';
 
 export default function BoardPage() {
   const { feature } = useParams<{ feature: string }>();
@@ -24,6 +25,8 @@ export default function BoardPage() {
     <BoardScreen title={item.label} onExit={() => void navigate(item.path)}>
       {item.id === 'lesson' ? (
         <LessonBoard />
+      ) : item.id === 'quiz' ? (
+        <QuizBoard />
       ) : (
         <p className="text-slate-500">이 화면은 기능을 이식할 때 실제 내용으로 채워집니다.</p>
       )}

@@ -1,0 +1,265 @@
+import { useCallback, useMemo } from 'react';
+
+import { createQuestion, createQuizSet } from '../../shared/domain/factories';
+import { createId } from '../../shared/ids';
+import type { QuizQuestion, QuizResult, QuizSet } from '../../shared/domain/types';
+import { useToolkit } from '../../shared/state/ToolkitDataProvider';
+import { createRunState, teamScores, toResult, validateQuizSet, type QuizRunState } from './quizCore';
+
+/**
+ * 퀴즈 화면과 저장소를 잇는 훅.
+ *
+ * 진행 상태를 저장한다. 전자칠판이 새 창으로 열리기 때문에,
+ * 화면 안 state로 두면 칠판에서 아무것도 보이지 않는다.
+ * 수업 중 퀴즈는 칠판이 주 화면이다.
+ */
+export interface QuizView {
+  sets: QuizSet[];
+  results: QuizResult[];
+  run: QuizRunState | null;
+  runningSet: QuizSet | null;
+  teams: string[];
+  scores: Record<string, number>;
+
+  addSet: (title: string) => string;
+  renameSet: (setId: string, title: string) => void;
+  deleteSet: (setId: string) => Promise<void>;
+  addQuestion: (setId: string, type: QuizQuestion['type']) => void;
+  updateQuestion: (setId: string, questionId: string, patch: Partial<QuizQuestion>) => void;
+  removeQuestion: (setId: string, questionId: string) => void;
+  validate: (set: QuizSet) => ReturnType<typeof validateQuizSet>;
+
+  setTeams: (teams: string[]) => void;
+  startRun: (setId: string) => void;
+  stopRun: () => void;
+  markCorrect: (team: string) => void;
+  reveal: () => void;
+  goNextQuestion: () => void;
+  goPrevQuestion: () => void;
+  finishRun: () => void;
+  deleteResult: (resultId: string) => void;
+}
+
+const DEFAULT_TEAMS = ['1모둠', '2모둠', '3모둠', '4모둠'];
+
+export function useQuiz(): QuizView {
+  const { data, update, guard } = useToolkit();
+
+  const run = data.quizRun;
+  const teams = useMemo(
+    () => (run !== null && run.teams.length > 0 ? run.teams : DEFAULT_TEAMS),
+    [run],
+  );
+
+  const setRun = useCallback(
+    (recipe: (current: QuizRunState | null) => QuizRunState | null): void => {
+      update((current) => ({ ...current, quizRun: recipe(current.quizRun) }));
+    },
+    [update],
+  );
+
+  const sets = useMemo(
+    () => [...data.quizSets].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [data.quizSets],
+  );
+
+  const results = useMemo(
+    () => [...data.quizResults].sort((a, b) => b.playedAt.localeCompare(a.playedAt)),
+    [data.quizResults],
+  );
+
+  const runningSet = useMemo(
+    () => (run === null ? null : (data.quizSets.find((set) => set.id === run.quizSetId) ?? null)),
+    [run, data.quizSets],
+  );
+
+  const scores = useMemo(
+    () => (runningSet === null || run === null ? {} : teamScores(runningSet, run, teams)),
+    [runningSet, run, teams],
+  );
+
+  const patchSet = useCallback(
+    (setId: string, recipe: (set: QuizSet) => QuizSet): void => {
+      const now = new Date().toISOString();
+      update((current) => ({
+        ...current,
+        quizSets: current.quizSets.map((set) =>
+          set.id === setId ? { ...recipe(set), updatedAt: now } : set,
+        ),
+      }));
+    },
+    [update],
+  );
+
+  const addSet = useCallback(
+    (title: string): string => {
+      const set = createQuizSet({ title });
+      update((current) => ({ ...current, quizSets: [...current.quizSets, set] }));
+      return set.id;
+    },
+    [update],
+  );
+
+  const renameSet = useCallback(
+    (setId: string, title: string): void => {
+      const trimmed = title.trim();
+      if (trimmed === '') return;
+      patchSet(setId, (set) => ({ ...set, title: trimmed }));
+    },
+    [patchSet],
+  );
+
+  const deleteSet = useCallback(
+    async (setId: string): Promise<void> => {
+      await guard('문제 세트 삭제 직전');
+      update((current) => ({
+        ...current,
+        quizSets: current.quizSets.filter((set) => set.id !== setId),
+        // 결과는 남긴다. 어떤 문제였는지는 사라져도 정답률 기록은 의미가 있다.
+      }));
+      setRun((value) => (value?.quizSetId === setId ? null : value));
+    },
+    [guard, update],
+  );
+
+  const addQuestion = useCallback(
+    (setId: string, type: QuizQuestion['type']): void => {
+      patchSet(setId, (set) => ({
+        ...set,
+        questions: [...set.questions, createQuestion({ type, text: '' })],
+      }));
+    },
+    [patchSet],
+  );
+
+  const updateQuestion = useCallback(
+    (setId: string, questionId: string, patch: Partial<QuizQuestion>): void => {
+      patchSet(setId, (set) => ({
+        ...set,
+        questions: set.questions.map((question) =>
+          question.id === questionId ? { ...question, ...patch } : question,
+        ),
+      }));
+    },
+    [patchSet],
+  );
+
+  const removeQuestion = useCallback(
+    (setId: string, questionId: string): void => {
+      patchSet(setId, (set) => ({
+        ...set,
+        questions: set.questions.filter((question) => question.id !== questionId),
+      }));
+    },
+    [patchSet],
+  );
+
+  const startRun = useCallback(
+    (setId: string): void => {
+      setRun(() => createRunState(setId, teams, new Date().toISOString()));
+    },
+    [setRun, teams],
+  );
+
+  const stopRun = useCallback((): void => setRun(() => null), [setRun]);
+
+  const setTeams = useCallback(
+    (next: string[]): void => {
+      setRun((current) => (current === null ? current : { ...current, teams: next }));
+    },
+    [setRun],
+  );
+
+  const markCorrect = useCallback((team: string): void => {
+    setRun((current) => {
+      if (current === null) return current;
+
+      const questionId = currentQuestionId(current, data.quizSets);
+      if (questionId === null) return current;
+
+      const marked = current.correctTeamsByQuestion[questionId] ?? [];
+      const next = marked.includes(team)
+        ? marked.filter((name) => name !== team)
+        : [...marked, team];
+
+      return {
+        ...current,
+        correctTeamsByQuestion: { ...current.correctTeamsByQuestion, [questionId]: next },
+      };
+    });
+  }, [data.quizSets, setRun]);
+
+  const reveal = useCallback((): void => {
+    setRun((current) => (current === null ? current : { ...current, revealed: !current.revealed }));
+  }, [setRun]);
+
+  const move = useCallback(
+    (delta: number): void => {
+      setRun((current) => {
+        if (current === null) return current;
+
+        const set = data.quizSets.find((item) => item.id === current.quizSetId);
+        const total = set?.questions.length ?? 0;
+        const index = Math.max(0, Math.min(current.questionIndex + delta, Math.max(0, total - 1)));
+
+        // 문제를 넘기면 정답 공개는 다시 닫는다. 다음 문제 답이 미리 보이면 안 된다.
+        return { ...current, questionIndex: index, revealed: false };
+      });
+    },
+    [data.quizSets, setRun],
+  );
+
+  const goNextQuestion = useCallback((): void => move(1), [move]);
+  const goPrevQuestion = useCallback((): void => move(-1), [move]);
+
+  const finishRun = useCallback((): void => {
+    if (run === null || runningSet === null) return;
+
+    const result = toResult(runningSet, run, teams, createId(), new Date().toISOString());
+    update((current) => ({
+      ...current,
+      quizResults: [...current.quizResults, result],
+      quizRun: null,
+    }));
+  }, [run, runningSet, teams, update]);
+
+  const deleteResult = useCallback(
+    (resultId: string): void => {
+      update((current) => ({
+        ...current,
+        quizResults: current.quizResults.filter((result) => result.id !== resultId),
+      }));
+    },
+    [update],
+  );
+
+  return {
+    sets,
+    results,
+    run,
+    runningSet,
+    teams,
+    scores,
+    addSet,
+    renameSet,
+    deleteSet,
+    addQuestion,
+    updateQuestion,
+    removeQuestion,
+    validate: validateQuizSet,
+    setTeams,
+    startRun,
+    stopRun,
+    markCorrect,
+    reveal,
+    goNextQuestion,
+    goPrevQuestion,
+    finishRun,
+    deleteResult,
+  };
+}
+
+function currentQuestionId(run: QuizRunState, sets: readonly QuizSet[]): string | null {
+  const set = sets.find((item) => item.id === run.quizSetId);
+  return set?.questions[run.questionIndex]?.id ?? null;
+}

@@ -148,6 +148,7 @@ export function createEmptyToolkitData(): ToolkitData {
     lessonRun: null,
     quizSets: [],
     quizResults: [],
+    quizRun: null,
     tasks: [],
     messageTemplates: [],
     messageFavorites: [],

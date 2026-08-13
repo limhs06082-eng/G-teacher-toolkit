@@ -12,6 +12,7 @@ import {
   type QuestionType,
   type QuizQuestion,
   type QuizResult,
+  type QuizRun,
   type QuizSet,
   type TaskItem,
   type TaskPriority,
@@ -196,6 +197,35 @@ function parseQuizResult(raw: unknown, now: string): QuizResult | null {
   };
 }
 
+function parseStringArrayRecord(value: unknown): Record<string, string[]> {
+  if (!isRecord(value)) return {};
+
+  const result: Record<string, string[]> = {};
+  for (const [key, raw] of Object.entries(value)) result[key] = strArray(raw);
+  return result;
+}
+
+function parseQuizRun(raw: unknown, sets: readonly QuizSet[]): QuizRun | null {
+  if (!isRecord(raw)) return null;
+  const quizSetId = requiredStr(raw['quizSetId']);
+  if (quizSetId === null) return null;
+
+  // 없어진 문제 세트를 가리키면 진행 상태를 버린다. 그대로 두면 빈 화면이 뜬다.
+  const set = sets.find((item) => item.id === quizSetId);
+  if (set === undefined) return null;
+
+  const index = Math.round(num(raw['questionIndex'], 0));
+
+  return {
+    quizSetId,
+    questionIndex: Math.max(0, Math.min(index, Math.max(0, set.questions.length - 1))),
+    correctTeamsByQuestion: parseStringArrayRecord(raw['correctTeamsByQuestion']),
+    revealed: bool(raw['revealed'], false),
+    teams: strArray(raw['teams']),
+    startedAt: str(raw['startedAt']),
+  };
+}
+
 function parseStep(raw: unknown): TaskStep | null {
   if (!isRecord(raw)) return null;
   const id = requiredStr(raw['id']);
@@ -280,6 +310,7 @@ export function parseToolkitData(raw: unknown, now: string = new Date().toISOStr
 
   const profileRaw = isRecord(root['profile']) ? root['profile'] : {};
   const lessonTemplates = parseList('lessonTemplates', '수업 흐름', (r) => parseLessonTemplate(r, now));
+  const quizSets = parseList('quizSets', '문제 세트', (r) => parseQuizSet(r, now));
 
   return {
     data: {
@@ -292,8 +323,9 @@ export function parseToolkitData(raw: unknown, now: string = new Date().toISOStr
       },
       lessonTemplates,
       lessonRun: parseLessonRun(root['lessonRun'], lessonTemplates),
-      quizSets: parseList('quizSets', '문제 세트', (r) => parseQuizSet(r, now)),
+      quizSets,
       quizResults: parseList('quizResults', '퀴즈 결과', (r) => parseQuizResult(r, now)),
+      quizRun: parseQuizRun(root['quizRun'], quizSets),
       tasks: parseList('tasks', '업무', (r) => parseTask(r, now)),
       messageTemplates: parseList('messageTemplates', '문구 템플릿', (r) =>
         parseMessageTemplate(r, now),
