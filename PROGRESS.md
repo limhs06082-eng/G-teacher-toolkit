@@ -19,8 +19,8 @@ npm run verify
 | 1 | 스캐폴딩 + shared 계층 이식 | ✅ |
 | 2 | `features/lesson` 수업 진행판 | ✅ 완료 |
 | 3 | `features/quiz` 형성평가 | ✅ 완료 |
-| 4 | `features/task` 업무 체크리스트 | ⬜ **다음** |
-| 5 | `features/message` 문구 템플릿 + api/refine | ⬜ |
+| 4 | `features/task` 업무 체크리스트 | ✅ 완료 |
+| 5 | `features/message` 문구 템플릿 + api/refine | ⬜ **다음** |
 | 6 | 홈 + 설정·백업 + README | ⬜ |
 
 ## 지켜야 할 것
