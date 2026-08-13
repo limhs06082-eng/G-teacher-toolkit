@@ -21,7 +21,9 @@ npm run verify
 | 3 | `features/quiz` 형성평가 | ✅ 완료 |
 | 4 | `features/task` 업무 체크리스트 | ✅ 완료 |
 | 5 | `features/message` 문구 템플릿 + api/refine | ✅ 완료 |
-| 6 | 홈 + 설정·백업 + README | ⬜ **다음** |
+| 6 | 홈 + 설정·백업 + 기존 앱 가져오기 + README | ✅ 완료 |
+
+2단계 화면 작업이 모두 끝났다. `npm run verify` 통과(테스트 115개).
 
 ## 지켜야 할 것
 
