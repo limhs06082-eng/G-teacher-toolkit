@@ -123,7 +123,7 @@ export function QuizSessionPanel(props: {
           <p className="text-sm text-slate-600">학생에게 이 코드를 알려 주세요.</p>
           <p
             data-testid="session-code"
-            className="font-mono text-3xl font-bold tracking-widest text-slate-900"
+            className="font-mono text-3xl font-bold tracking-widest tabular-nums text-slate-900"
           >
             {session.code}
           </p>

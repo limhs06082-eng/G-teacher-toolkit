@@ -65,7 +65,7 @@ export default function LessonPage() {
       </div>
 
       {lesson.running !== null && lesson.progress !== null ? (
-        <Card title="지금 진행 중" icon={Presentation} accentClass="text-seating-500">
+        <Card title="지금 진행 중" icon={Presentation} accentClass="text-lesson-500">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-sm text-slate-500">

@@ -31,8 +31,8 @@ export const FEATURE_NAV: readonly FeatureNavItem[] = [
     label: '수업 진행',
     hasBoardView: true,
     icon: Presentation,
-    accentClass: 'text-seating-500',
-    tintClass: 'bg-seating-50',
+    accentClass: 'text-lesson-500',
+    tintClass: 'bg-lesson-50',
   },
   {
     id: 'quiz',
@@ -40,8 +40,8 @@ export const FEATURE_NAV: readonly FeatureNavItem[] = [
     label: '형성평가',
     hasBoardView: true,
     icon: CheckSquare,
-    accentClass: 'text-duty-500',
-    tintClass: 'bg-duty-50',
+    accentClass: 'text-quiz-500',
+    tintClass: 'bg-quiz-50',
   },
   {
     id: 'task',
@@ -49,8 +49,8 @@ export const FEATURE_NAV: readonly FeatureNavItem[] = [
     label: '업무 체크',
     hasBoardView: false,
     icon: ListChecks,
-    accentClass: 'text-assignment-500',
-    tintClass: 'bg-assignment-50',
+    accentClass: 'text-task-500',
+    tintClass: 'bg-task-50',
   },
   {
     id: 'message',
@@ -58,8 +58,8 @@ export const FEATURE_NAV: readonly FeatureNavItem[] = [
     label: '문구 템플릿',
     hasBoardView: false,
     icon: MessageSquareText,
-    accentClass: 'text-reward-500',
-    tintClass: 'bg-reward-50',
+    accentClass: 'text-message-500',
+    tintClass: 'bg-message-50',
   },
 ] as const;
 

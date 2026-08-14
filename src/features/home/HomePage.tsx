@@ -99,7 +99,7 @@ export default function HomePage() {
               </div>
 
               <p className="mt-3 flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-slate-900">{summary?.value ?? '—'}</span>
+                <span data-numeric className="text-2xl font-bold text-slate-900">{summary?.value ?? '—'}</span>
               </p>
               <p className="mt-0.5 text-sm text-slate-500">{summary?.note ?? ''}</p>
 

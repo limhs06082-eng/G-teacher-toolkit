@@ -1,3 +1,14 @@
+/*
+ * Pretendard 동적 서브셋.
+ * 실제로 쓰는 글자만 내려받아 한글 UI에서 60~100KB면 된다.
+ *
+ * CDN을 쓰지 않는다. 학교 네트워크가 외부 CDN을 막는 일이 잦고,
+ * index.html의 CSP에 외부 호스트를 열어야 한다.
+ * 번들에 넣으면 오프라인에서도 뜨고 fork 직후 설정 없이 동작한다.
+ *
+ * 이 줄이 없던 동안 폰트 스택 맨 앞의 Pretendard는 그냥 무시됐다.
+ */
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 @import 'tailwindcss';
 
 /* ============================================================
@@ -20,21 +31,21 @@
 
   /* ── 기능 영역 구분색 ───────────────────────────────────── */
   /* 홈 카드·네비에서 기능을 색으로 식별한다. 서로 충분히 떨어진 색상각을 쓴다. */
-  --color-seating-50: oklch(0.96 0.02 265);
-  --color-seating-500: oklch(0.62 0.15 265);
-  --color-seating-700: oklch(0.45 0.13 265);
+  --color-lesson-50: oklch(0.96 0.02 265);
+  --color-lesson-500: oklch(0.62 0.15 265);
+  --color-lesson-700: oklch(0.45 0.13 265);
 
-  --color-duty-50: oklch(0.96 0.03 155);
-  --color-duty-500: oklch(0.6 0.13 155);
-  --color-duty-700: oklch(0.44 0.11 155);
+  --color-quiz-50: oklch(0.96 0.03 155);
+  --color-quiz-500: oklch(0.6 0.13 155);
+  --color-quiz-700: oklch(0.44 0.11 155);
 
-  --color-reward-50: oklch(0.97 0.03 75);
-  --color-reward-500: oklch(0.68 0.14 75);
-  --color-reward-700: oklch(0.5 0.12 75);
+  --color-message-50: oklch(0.97 0.03 75);
+  --color-message-500: oklch(0.68 0.14 75);
+  --color-message-700: oklch(0.5 0.12 75);
 
-  --color-assignment-50: oklch(0.96 0.02 25);
-  --color-assignment-500: oklch(0.62 0.16 25);
-  --color-assignment-700: oklch(0.46 0.14 25);
+  --color-task-50: oklch(0.96 0.02 25);
+  --color-task-500: oklch(0.62 0.16 25);
+  --color-task-700: oklch(0.46 0.14 25);
 
   /* ── 의미색 ─────────────────────────────────────────────── */
   --color-success-50: oklch(0.96 0.03 150);
@@ -64,6 +75,17 @@
   --font-mono: 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /*
+   * 한글은 라틴보다 x-height가 커서 같은 px에서 더 빽빽해 보인다.
+   * 본문(text-sm)이 이미 일관되므로 클래스를 갈아엎지 않고 값만 한 단계 키운다.
+   */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.55;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.6;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+
+  /*
    * board 스케일 — 전자칠판 전용.
    * 교실 뒷자리는 칠판에서 3~8m 떨어져 있다. 일반 화면 타이포로는 읽히지 않는다.
    * desk 스케일(Tailwind 기본 text-*)과 절대 섞어 쓰지 않는다.
@@ -82,6 +104,22 @@
   /* ── 모양 ───────────────────────────────────────────────── */
   --radius-card: 0.875rem;
   --radius-control: 0.5rem;
+
+  /*
+   * 그림자는 두 단계뿐이다. 교사용 도구는 수업 중에 켜 놓는 물건이라 조용해야 한다.
+   * 테두리는 이미 충분히 진하다. 둘 다 올리면 과해진다.
+   */
+  --shadow-card: 0 1px 2px oklch(0.2 0.02 250 / 0.04), 0 1px 3px oklch(0.2 0.02 250 / 0.06);
+  --shadow-raised: 0 4px 6px oklch(0.2 0.02 250 / 0.05), 0 10px 20px oklch(0.2 0.02 250 / 0.08);
+
+  /*
+   * 움직임은 짧고 한 종류만.
+   *
+   * --ease-* 는 Tailwind가 유틸리티를 만들어 주는 이름공간이라 ease-out-soft로 쓸 수 있다.
+   * --duration-* 은 그 목록에 없다. 정의해도 duration-fast 클래스는 생기지 않고
+   * 조용히 아무 효과 없이 지나간다. 시간은 duration-[120ms]로 직접 적는다.
+   */
+  --ease-out-soft: cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ============================================================
@@ -89,6 +127,8 @@
    ============================================================ */
 :root {
   color-scheme: light;
+  /* 키프레임에서 쓴다. @theme이 아니라 여기 둔다 (Tailwind 이름공간이 아니다). */
+  --duration-fast: 120ms;
 }
 
 html,
@@ -100,6 +140,33 @@ body,
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
   font-family: var(--font-sans);
+  /* 한글은 라틴용 기본 자간에서 벌어져 보인다. */
+  letter-spacing: -0.01em;
+}
+
+/*
+ * 바뀌는 숫자는 폭이 고정돼야 한다.
+ * 이게 없으면 모둠 점수가 0점 → 10점이 될 때 버튼 너비가 튄다.
+ */
+table,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 모달·알림이 튀어나오지 않고 올라오게 한다. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in var(--duration-fast) var(--ease-out-soft);
 }
 
 /* 키보드 사용자에게만 포커스 링을 보인다. 교사는 단축키를 많이 쓴다. */

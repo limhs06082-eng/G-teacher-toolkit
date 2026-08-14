@@ -82,7 +82,7 @@ export function LessonBoard() {
       {/* 진행률은 완료 체크 기준이다. 학생에게 얼마나 남았는지 보여 준다. */}
       <div className="h-6 overflow-hidden rounded-full bg-slate-100">
         <span
-          className="block h-full bg-seating-500 transition-all"
+          className="block h-full bg-lesson-500 transition-all"
           style={{ width: `${Math.round(progress.ratio * 100)}%` }}
         />
       </div>
