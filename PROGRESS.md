@@ -23,7 +23,20 @@ npm run verify
 | 5 | `features/message` 문구 템플릿 + api/refine | ✅ 완료 |
 | 6 | 홈 + 설정·백업 + 기존 앱 가져오기 + README | ✅ 완료 |
 
-2단계 화면 작업이 모두 끝났다. `npm run verify` 통과(테스트 115개).
+2단계 화면 작업이 모두 끝났다.
+
+## 그 뒤에 더한 것
+
+| 내용 | 상태 | 설계·계획 |
+|---|---|---|
+| 창·기기 간 동기화 (`StorageAdapter.subscribe`) | ✅ | `G-classroom-suite`의 `2026-08-13-cross-window-sync-design.md` |
+| 형성평가 학생 응답 수집 (QR·6자 코드) | ✅ | [`specs/2026-08-14-quiz-live-responses-design.md`](docs/superpowers/specs/2026-08-14-quiz-live-responses-design.md) |
+| `docs/firebase-guide.md` | ✅ | — |
+
+`npm run verify` 통과(테스트 185개).
+
+학생 응답 수집은 **Firebase를 붙여야 학생 휴대폰이 들어온다.**
+붙이기 전에도 `LocalSessionRelay`로 같은 브라우저에서 흐름 전체가 동작한다.
 
 ## 지켜야 할 것
 
