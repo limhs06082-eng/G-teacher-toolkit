@@ -15,6 +15,7 @@ function withRun(questionIndex: number): ToolkitData {
       quizSetId: 'qs-1',
       questionIndex,
       correctTeamsByQuestion: {},
+      manualTeamsByQuestion: {},
       revealed: false,
       teams: ['1모둠'],
       startedAt: '2026-08-13T00:00:00.000Z',

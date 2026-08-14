@@ -115,6 +115,14 @@ export interface QuizRun {
   questionIndex: number;
   /** 문제 id → 맞힌 팀 이름 */
   correctTeamsByQuestion: Record<string, string[]>;
+  /**
+   * 교사가 칠판에서 직접 정오를 누른 (문제 id → 모둠 이름[]).
+   *
+   * 학생 응답 자동 채점이 여기 있는 자리는 건드리지 않는다.
+   * 한 번 누르면 껐다 켜도 영구히 교사 것이다.
+   * "교사가 오답으로 되돌린 것"과 "아직 안 본 것"은 다르다.
+   */
+  manualTeamsByQuestion: Record<string, string[]>;
   /** 정답을 공개했는지 */
   revealed: boolean;
   teams: string[];

@@ -101,6 +101,7 @@ export function createRunState(quizSetId: string, teams: readonly string[], star
     quizSetId,
     questionIndex: 0,
     correctTeamsByQuestion: {},
+    manualTeamsByQuestion: {},
     revealed: false,
     teams: [...teams],
     startedAt,
