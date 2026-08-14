@@ -5,6 +5,8 @@ import { createId } from '../../shared/ids';
 import type { QuizQuestion, QuizResult, QuizSet } from '../../shared/domain/types';
 import { useToolkit } from '../../shared/state/ToolkitDataProvider';
 import { createRunState, teamScores, toResult, validateQuizSet, type QuizRunState } from './quizCore';
+import { mergeAutoGrading } from './session/sessionCore';
+import type { QuizResponse } from './session/types';
 
 /**
  * 퀴즈 화면과 저장소를 잇는 훅.
@@ -38,6 +40,8 @@ export interface QuizView {
   goPrevQuestion: () => void;
   finishRun: () => void;
   deleteResult: (resultId: string) => void;
+  /** 학생 응답으로 채점을 갱신한다. 교사가 손댄 자리는 건드리지 않는다. */
+  applyAutoGrading: (responses: readonly QuizResponse[]) => void;
 }
 
 const DEFAULT_TEAMS = ['1모둠', '2모둠', '3모둠', '4모둠'];
@@ -182,9 +186,19 @@ export function useQuiz(): QuizView {
         ? marked.filter((name) => name !== team)
         : [...marked, team];
 
+      const manual = current.manualTeamsByQuestion[questionId] ?? [];
+
       return {
         ...current,
         correctTeamsByQuestion: { ...current.correctTeamsByQuestion, [questionId]: next },
+        /*
+         * 한 번 누르면 그 자리는 영구히 교사 것이다. 자동 채점이 건드리지 않는다.
+         * 눌렀다 해제한 것과 아직 안 본 것은 다르다.
+         */
+        manualTeamsByQuestion: {
+          ...current.manualTeamsByQuestion,
+          [questionId]: manual.includes(team) ? manual : [...manual, team],
+        },
       };
     });
   }, [data.quizSets, setRun]);
@@ -223,6 +237,29 @@ export function useQuiz(): QuizView {
     }));
   }, [run, runningSet, teams, update]);
 
+  const applyAutoGrading = useCallback(
+    (responses: readonly QuizResponse[]): void => {
+      update((current) => {
+        const run = current.quizRun;
+        if (run === null) return current;
+
+        const set = current.quizSets.find((item) => item.id === run.quizSetId);
+        if (set === undefined) return current;
+
+        const next = mergeAutoGrading(run, set, responses);
+
+        /*
+         * 값이 그대로면 저장하지 않는다.
+         * 다른 창도 같은 계산을 하므로, 매번 쓰면 서로 알림을 주고받으며 돈다.
+         */
+        if (JSON.stringify(next) === JSON.stringify(run.correctTeamsByQuestion)) return current;
+
+        return { ...current, quizRun: { ...run, correctTeamsByQuestion: next } };
+      });
+    },
+    [update],
+  );
+
   const deleteResult = useCallback(
     (resultId: string): void => {
       update((current) => ({
@@ -256,6 +293,7 @@ export function useQuiz(): QuizView {
     goPrevQuestion,
     finishRun,
     deleteResult,
+    applyAutoGrading,
   };
 }
 
