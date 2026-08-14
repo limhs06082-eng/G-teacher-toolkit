@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import type { QuizQuestion, QuizSet } from '../../shared/domain/types';
 import { Badge, Button, Card, ConfirmDialog, cx, EmptyState, Modal, Tabs, useToast } from '../../shared/ui';
 import { questionStats, QUESTION_TYPE_LABELS } from './quizCore';
+import { QuizSessionPanel } from './QuizSessionPanel';
 import { useQuiz } from './useQuiz';
 
 type QuizTab = 'sets' | 'results';
@@ -56,6 +57,16 @@ export default function QuizPage() {
           )}
         </div>
       </div>
+
+      {quiz.run !== null && quiz.runningSet !== null ? (
+        <QuizSessionPanel
+          set={quiz.runningSet}
+          questionIndex={quiz.run.questionIndex}
+          teams={quiz.teams}
+          onResponses={quiz.applyAutoGrading}
+          onSessionCode={quiz.setSessionCode}
+        />
+      ) : null}
 
       <Tabs
         items={[

@@ -42,6 +42,8 @@ export interface QuizView {
   deleteResult: (resultId: string) => void;
   /** 학생 응답으로 채점을 갱신한다. 교사가 손댄 자리는 건드리지 않는다. */
   applyAutoGrading: (responses: readonly QuizResponse[]) => void;
+  /** 열린 세션 코드를 기록한다. 전자칠판이 이것으로 세션을 찾는다. */
+  setSessionCode: (code: string | null) => void;
 }
 
 const DEFAULT_TEAMS = ['1모둠', '2모둠', '3모둠', '4모둠'];
@@ -237,6 +239,15 @@ export function useQuiz(): QuizView {
     }));
   }, [run, runningSet, teams, update]);
 
+  const setSessionCode = useCallback(
+    (next: string | null): void => {
+      setRun((current) =>
+        current === null || current.sessionCode === next ? current : { ...current, sessionCode: next },
+      );
+    },
+    [setRun],
+  );
+
   const applyAutoGrading = useCallback(
     (responses: readonly QuizResponse[]): void => {
       update((current) => {
@@ -294,6 +305,7 @@ export function useQuiz(): QuizView {
     finishRun,
     deleteResult,
     applyAutoGrading,
+    setSessionCode,
   };
 }
 

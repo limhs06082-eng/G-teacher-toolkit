@@ -221,6 +221,7 @@ function parseQuizRun(raw: unknown, sets: readonly QuizSet[]): QuizRun | null {
     questionIndex: Math.max(0, Math.min(index, Math.max(0, set.questions.length - 1))),
     correctTeamsByQuestion: parseStringArrayRecord(raw['correctTeamsByQuestion']),
     manualTeamsByQuestion: parseStringArrayRecord(raw['manualTeamsByQuestion']),
+    sessionCode: requiredStr(raw['sessionCode']),
     revealed: bool(raw['revealed'], false),
     teams: strArray(raw['teams']),
     startedAt: str(raw['startedAt']),

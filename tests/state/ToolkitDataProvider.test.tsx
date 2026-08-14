@@ -16,6 +16,7 @@ function withRun(questionIndex: number): ToolkitData {
       questionIndex,
       correctTeamsByQuestion: {},
       manualTeamsByQuestion: {},
+      sessionCode: null,
       revealed: false,
       teams: ['1모둠'],
       startedAt: '2026-08-13T00:00:00.000Z',

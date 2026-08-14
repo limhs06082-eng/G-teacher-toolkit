@@ -2,6 +2,7 @@ import { Check, Eye, EyeOff, Flag } from 'lucide-react';
 
 import { Button, cx, EmptyState } from '../../shared/ui';
 import { correctChoiceText, QUESTION_TYPE_LABELS } from './quizCore';
+import { useSessionResponses } from './session/useSessionResponses';
 import { useQuiz } from './useQuiz';
 
 /**
@@ -12,6 +13,11 @@ import { useQuiz } from './useQuiz';
  */
 export function QuizBoard() {
   const quiz = useQuiz();
+  /*
+   * 세션 코드는 quizRun에 들어 있다. 칠판은 별도 창이라
+   * 저장 자료를 거치지 않으면 세션을 찾을 길이 없다.
+   */
+  const responses = useSessionResponses(quiz.run?.sessionCode ?? null);
 
   if (quiz.run === null || quiz.runningSet === null) {
     return (
@@ -103,8 +109,12 @@ export function QuizBoard() {
       {/* 맞힌 팀 체크. 교사가 칠판 앞에서 바로 누른다. */}
       <div className="mt-auto flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
-          {quiz.teams.map((team) => {
+          {quiz.teams.map((team, teamIndex) => {
             const isMarked = marked.includes(team);
+            const hasSubmitted = responses.some(
+              (row) => row.questionId === question.id && row.teamIndex === teamIndex,
+            );
+
             return (
               <Button
                 key={team}
@@ -113,6 +123,13 @@ export function QuizBoard() {
                 aria-pressed={isMarked}
                 onClick={() => quiz.markCorrect(team)}
               >
+                {hasSubmitted ? (
+                  // 정답 공개 전에는 냈다는 것만 보인다. 답을 보여 주면 베낀다.
+                  <span
+                    aria-label="제출함"
+                    className="mr-2 inline-block size-2.5 rounded-full bg-success-500"
+                  />
+                ) : null}
                 {team} {quiz.scores[team] ?? 0}점
               </Button>
             );

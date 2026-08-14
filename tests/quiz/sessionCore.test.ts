@@ -31,6 +31,7 @@ function runWith(overrides: Partial<QuizRun> = {}): QuizRun {
     questionIndex: 0,
     correctTeamsByQuestion: {},
     manualTeamsByQuestion: {},
+    sessionCode: null,
     revealed: false,
     teams: ['1모둠', '2모둠'],
     startedAt: NOW,

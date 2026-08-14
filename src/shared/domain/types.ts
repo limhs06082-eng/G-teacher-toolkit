@@ -123,6 +123,13 @@ export interface QuizRun {
    * "교사가 오답으로 되돌린 것"과 "아직 안 본 것"은 다르다.
    */
   manualTeamsByQuestion: Record<string, string[]>;
+  /**
+   * 열려 있는 학생 응답 세션의 6자 코드. 없으면 null.
+   *
+   * 세션 자료 자체는 여기 두지 않지만 **가리키는 코드는 둔다.**
+   * 전자칠판이 별도 창이라, 이것이 없으면 칠판은 세션을 찾을 길이 없다.
+   */
+  sessionCode: string | null;
   /** 정답을 공개했는지 */
   revealed: boolean;
   teams: string[];
