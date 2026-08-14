@@ -14,6 +14,7 @@ const TaskPage = lazy(() => import('../features/task/TaskPage'));
 const MessagePage = lazy(() => import('../features/message/MessagePage'));
 const SettingsPage = lazy(() => import('../features/settings/SettingsPage'));
 const BoardPage = lazy(() => import('../features/board/BoardPage'));
+const JoinPage = lazy(() => import('../features/quiz/JoinPage'));
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,16 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<PageLoader />}>
         <BoardPage />
+      </Suspense>
+    ),
+    errorElement: <RootErrorBoundary />,
+  },
+  {
+    // 학생 화면. 셸 밖에 둔다. 폰에는 교사용 내비게이션이 필요 없다.
+    path: 'join/:code',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <JoinPage />
       </Suspense>
     ),
     errorElement: <RootErrorBoundary />,
