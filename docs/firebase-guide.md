@@ -61,6 +61,8 @@ Firebase 웹 설정(`apiKey` 등)은 **공개를 전제로 만들어진 값**입
    - 위치는 `asia-northeast3 (서울)`
    - **프로덕션 모드로 시작**을 고르세요 (규칙은 4단계에서 넣습니다)
 5. **빌드 → Authentication → 시작하기 → 이메일/비밀번호** 사용 설정
+6. 같은 화면에서 **익명** 로그인도 사용 설정하세요.
+   형성평가에서 학생이 QR로 들어올 때 씁니다. 학생은 계정을 만들지 않습니다.
 
 ## 2. 웹 앱 등록하고 설정값 복사
 
@@ -96,7 +98,11 @@ fork한 저장소를 AI 스튜디오로 연 뒤, **아래 내용을 그대로 �
 > 8. `api/refine.ts`는 Vercel 서버리스 함수야. 건드리지 말고, Cloud Functions로 옮기지도 마.
 > 9. 로그인은 이메일/비밀번호로 하고, 로그인 화면을 `/login` 경로에 만들어. 로그인하지 않으면 `LocalStorageAdapter`로 동작하게 해.
 > 10. Cloud Functions는 쓰지 마. 무료 요금제에서 배포할 수 없어.
-> 11. 다 만든 뒤 `npm run verify`를 실행해서 타입 검사·테스트·빌드가 모두 통과하는지 확인해.
+> 11. `src/features/quiz/session/FirestoreSessionRelay.ts`를 만들어. `src/features/quiz/session/QuizSessionRelay.ts`의 인터페이스를 그대로 구현하고 `isAvailable`은 `true`로 둬. 세션은 `quizSessions/{code}` 문서에, 응답은 그 아래 `responses/{questionId}__t{teamIndex}` 문서에 저장해. 문서 id가 (문제, 모둠)이라 같은 모둠이 다시 내면 그대로 덮어써야 해. 구독은 `onSnapshot`으로 하고 해제 함수를 돌려줘.
+> 12. `src/main.tsx`에서 Firebase 설정이 채워져 있으면 `setSessionRelay(new FirestoreSessionRelay(...))`를 불러. 설정이 없으면 지금처럼 `LocalSessionRelay`가 쓰이게 둬.
+> 13. 학생은 로그인하지 않으니 `signInAnonymously`로 익명 인증을 해.
+> 14. **세션 문서에 정답을 넣지 마.** 학생이 그 문서를 그대로 읽어. `QuizSessionQuestion`에는 정답과 해설이 없어야 해. 이건 보안 규칙으로 막을 수 있는 게 아니야. 학생은 그 문서를 읽어야만 문제를 볼 수 있으니까.
+> 15. 다 만든 뒤 `npm run verify`를 실행해서 타입 검사·테스트·빌드가 모두 통과하는지 확인해.
 
 작업이 끝나면 `firebaseConfig.ts`에 2단계에서 복사한 값을 채워 넣으세요.
 
@@ -111,6 +117,22 @@ service cloud.firestore {
     // 내 자료는 나만 읽고 쓴다. 그 외에는 전부 막는다.
     match /teachers/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // 형성평가 학생 응답 수집. 학생은 익명 로그인으로 들어온다.
+    match /quizSessions/{code} {
+      allow read: if resource.data.open == true;
+      allow create: if request.auth.uid == request.resource.data.ownerUid;
+      allow update, delete: if request.auth.uid == resource.data.ownerUid;
+
+      match /responses/{responseId} {
+        // 세션이 열려 있어야 쓸 수 있다. 로그인만 확인하고 끝내지 않는다.
+        allow create, update: if request.auth != null
+          && get(/databases/$(database)/documents/quizSessions/$(code)).data.open == true;
+        // 학생은 남의 답을 읽지 못한다. 베낄 수 없다.
+        allow read: if request.auth.uid ==
+          get(/databases/$(database)/documents/quizSessions/$(code)).data.ownerUid;
+      }
     }
   }
 }
@@ -151,6 +173,9 @@ Vercel이 자동으로 다시 배포합니다. 배포가 끝나면 `/login`에�
 - [ ] 로그아웃하면 이 브라우저에만 저장되는 모드로 돌아간다
 - [ ] Firebase 콘솔 → Firestore에 `teachers/{내 uid}/toolkit/data` 문서가 보인다
 - [ ] 그 문서 안에 **Gemini 키가 없다**
+- [ ] 형성평가에서 `학생 응답 받기`를 누르면 QR이 나오고, 휴대폰으로 그 QR을 찍어 들어가진다
+- [ ] 학생이 낸 답이 교사 화면의 제출 현황과 전자칠판에 바로 반영된다
+- [ ] Firestore의 `quizSessions/{코드}` 문서 안에 **정답이 없다**
 
 ## 막혔을 때
 
@@ -160,6 +185,8 @@ Vercel이 자동으로 다시 배포합니다. 배포가 끝나면 `/login`에�
 | 로그인이 안 됨 | 1단계에서 이메일/비밀번호 로그인을 켰는지 |
 | 자료가 동기화되지 않음 | `firebaseConfig.ts`에 값이 채워져 있는지, 로그인했는지 |
 | 칠판이 따라오지 않음 | `FirestoreAdapter`에 `subscribe`를 구현했는지 (3단계 3번) |
+| QR로 들어가면 "받기가 끝났습니다" | 익명 로그인을 켰는지(1단계 6번), 보안 규칙을 게시했는지 |
+| 학생 답이 안 들어옴 | `FirestoreSessionRelay`를 만들고 `setSessionRelay`를 불렀는지 (3단계 11·12번) |
 | 저장할 때마다 화면이 깜빡임 | `hasPendingWrites`를 거르지 않아 자기 저장을 되받고 있음 |
 | AI 다듬기가 안 됨 | Firebase와 무관합니다. 설정 화면에 Gemini 키를 넣었는지 |
 | 배포 후 흰 화면 | Vercel 배포 로그에서 빌드 오류 확인. `npm run verify`가 로컬에서 통과하는지 |
