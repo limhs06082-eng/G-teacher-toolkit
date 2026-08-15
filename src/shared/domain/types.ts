@@ -225,4 +225,12 @@ export interface ToolkitData {
   messageFavorites: string[];
   /** 숨긴 기본 템플릿 id */
   messageHidden: string[];
+
+  /**
+   * 퀴즈 모둠 이름.
+   *
+   * 비어 있으면 화면이 기본값(1모둠~4모둠)을 쓴다. 모둠 구성은 한 학기 내내
+   * 거의 같아서 퀴즈를 시작할 때마다 묻지 않고 여기 저장해 둔다.
+   */
+  quizTeams: string[];
 }

@@ -153,5 +153,6 @@ export function createEmptyToolkitData(): ToolkitData {
     messageTemplates: [],
     messageFavorites: [],
     messageHidden: [],
+    quizTeams: [],
   };
 }

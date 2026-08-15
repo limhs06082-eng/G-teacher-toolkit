@@ -334,6 +334,8 @@ export function parseToolkitData(raw: unknown, now: string = new Date().toISOStr
       ),
       messageFavorites: strArray(root['messageFavorites']),
       messageHidden: strArray(root['messageHidden']),
+      // 문자열이 아닌 항목은 걸러진다. 빈 배열이면 화면이 기본 모둠을 쓴다.
+      quizTeams: strArray(root['quizTeams']),
     },
     repairs,
   };

@@ -5,6 +5,7 @@ import { createId } from '../../shared/ids';
 import type { QuizQuestion, QuizResult, QuizSet } from '../../shared/domain/types';
 import { useToolkit } from '../../shared/state/ToolkitDataProvider';
 import { createRunState, teamScores, toResult, validateQuizSet, type QuizRunState } from './quizCore';
+import { normalizeTeams, teamsOrDefault } from './teamsCore';
 import { mergeAutoGrading } from './session/sessionCore';
 import type { QuizResponse } from './session/types';
 
@@ -20,7 +21,10 @@ export interface QuizView {
   results: QuizResult[];
   run: QuizRunState | null;
   runningSet: QuizSet | null;
+  /** 지금 화면에 보여 줄 팀. 진행 중이면 그 판이 시작할 때의 팀이다. */
   teams: string[];
+  /** 설정에 저장된 팀. 설정 화면이 고치는 대상이다. */
+  savedTeams: string[];
   scores: Record<string, number>;
 
   addSet: (title: string) => string;
@@ -31,7 +35,15 @@ export interface QuizView {
   removeQuestion: (setId: string, questionId: string) => void;
   validate: (set: QuizSet) => ReturnType<typeof validateQuizSet>;
 
+  /**
+   * 모둠 이름을 저장한다. 다음 퀴즈부터 이 이름으로 시작한다.
+   *
+   * **진행 중에는 아무것도 안 바꾼다.** 팀 이름이 기록의 열쇠라서
+   * 바꾸면 앞 문제에서 맞힌 기록이 어느 팀 것인지 알 수 없게 된다.
+   */
   setTeams: (teams: string[]) => void;
+  /** 퀴즈가 돌고 있어 모둠을 못 바꾸는 상태인가 */
+  isTeamsLocked: boolean;
   startRun: (setId: string) => void;
   stopRun: () => void;
   markCorrect: (team: string) => void;
@@ -46,16 +58,21 @@ export interface QuizView {
   setSessionCode: (code: string | null) => void;
 }
 
-const DEFAULT_TEAMS = ['1모둠', '2모둠', '3모둠', '4모둠'];
-
 export function useQuiz(): QuizView {
   const { data, update, guard } = useToolkit();
 
   const run = data.quizRun;
+
+  /*
+   * 진행 중이면 그 판이 시작할 때의 팀을 쓴다. 도중에 설정이 바뀌어도
+   * 이미 쌓인 점수와 어긋나지 않는다.
+   */
   const teams = useMemo(
-    () => (run !== null && run.teams.length > 0 ? run.teams : DEFAULT_TEAMS),
-    [run],
+    () => (run !== null && run.teams.length > 0 ? run.teams : teamsOrDefault(data.quizTeams)),
+    [run, data.quizTeams],
   );
+
+  const savedTeams = useMemo(() => teamsOrDefault(data.quizTeams), [data.quizTeams]);
 
   const setRun = useCallback(
     (recipe: (current: QuizRunState | null) => QuizRunState | null): void => {
@@ -162,18 +179,28 @@ export function useQuiz(): QuizView {
 
   const startRun = useCallback(
     (setId: string): void => {
-      setRun(() => createRunState(setId, teams, new Date().toISOString()));
+      // 저장해 둔 모둠으로 시작한다. 시작할 때마다 묻지 않는다.
+      setRun(() => createRunState(setId, savedTeams, new Date().toISOString()));
     },
-    [setRun, teams],
+    [setRun, savedTeams],
   );
 
   const stopRun = useCallback((): void => setRun(() => null), [setRun]);
 
   const setTeams = useCallback(
     (next: string[]): void => {
-      setRun((current) => (current === null ? current : { ...current, teams: next }));
+      update((current) => {
+        /*
+         * 진행 중에는 바꾸지 않는다. correctTeamsByQuestion이 팀을 이름으로
+         * 담기 때문에, 이름을 바꾸면 앞 문제의 기록이 어느 팀 것인지
+         * 알 수 없게 된다. 화면도 이때 설정을 잠그지만 여기서도 막아 둔다.
+         */
+        if (current.quizRun !== null) return current;
+
+        return { ...current, quizTeams: normalizeTeams(next) };
+      });
     },
-    [setRun],
+    [update],
   );
 
   const markCorrect = useCallback((team: string): void => {
@@ -287,6 +314,8 @@ export function useQuiz(): QuizView {
     run,
     runningSet,
     teams,
+    savedTeams,
+    isTeamsLocked: run !== null,
     scores,
     addSet,
     renameSet,

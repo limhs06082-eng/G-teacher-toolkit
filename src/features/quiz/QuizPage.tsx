@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckSquare, Monitor, Play, Plus, Square, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckSquare, Monitor, Play, Plus, Square, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import type { QuizQuestion, QuizSet } from '../../shared/domain/types';
 import { Badge, Button, Card, ConfirmDialog, cx, EmptyState, Modal, Tabs, useToast } from '../../shared/ui';
 import { questionStats, QUESTION_TYPE_LABELS } from './quizCore';
 import { QuizSessionPanel } from './QuizSessionPanel';
+import { MAX_TEAMS, MIN_TEAMS, renameTeam, resizeTeams } from './teamsCore';
 import { useQuiz } from './useQuiz';
 
 type QuizTab = 'sets' | 'results';
@@ -77,7 +78,10 @@ export default function QuizPage() {
         onChange={(id) => setTab(id as QuizTab)}
       >
         {tab === 'sets' ? (
-          quiz.sets.length === 0 ? (
+          <div className="flex flex-col gap-4">
+          <TeamSettings quiz={quiz} />
+
+          {quiz.sets.length === 0 ? (
             <EmptyState
               icon={CheckSquare}
               title="아직 문제 세트가 없습니다"
@@ -138,7 +142,8 @@ export default function QuizPage() {
                 );
               })}
             </ul>
-          )
+          )}
+          </div>
         ) : null}
 
         {tab === 'results' ? <ResultsTab quiz={quiz} /> : null}
@@ -174,6 +179,81 @@ export default function QuizPage() {
         }}
       />
     </div>
+  );
+}
+
+/**
+ * 모둠 설정.
+ *
+ * 원본에서는 팀이 `1모둠~4모둠` 넷으로 고정이었다. 모둠이 여섯인 학급은
+ * 두 모둠이 퀴즈에 참여할 수 없었다.
+ *
+ * 진행 중에는 잠근다. 팀 이름이 기록의 열쇠라서 도중에 바꾸면 앞 문제에서
+ * 맞힌 점수가 어느 모둠 것인지 알 수 없게 된다.
+ */
+function TeamSettings({ quiz }: { quiz: ReturnType<typeof useQuiz> }) {
+  const teams = quiz.savedTeams;
+  const locked = quiz.isTeamsLocked;
+
+  return (
+    <Card title="모둠" icon={Users}>
+      {locked ? (
+        <p className="mb-3 text-sm text-warning-700">
+          퀴즈를 진행하는 동안에는 모둠을 바꿀 수 없습니다. 지금까지의 점수가 어느 모둠 것인지
+          알 수 없게 됩니다. 진행을 멈춘 뒤 바꿔 주세요.
+        </p>
+      ) : (
+        <p className="mb-3 text-sm text-slate-500">
+          여기서 정한 모둠으로 퀴즈가 시작됩니다. 한 번 정하면 계속 쓰이니 학기 초에 한 번만
+          맞춰 두면 됩니다.
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex items-center gap-1 rounded-control border border-slate-200 px-1.5 py-1">
+          <span className="text-xs text-slate-500">모둠 수</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="모둠 수 줄이기"
+            disabled={locked || teams.length <= MIN_TEAMS}
+            onClick={() => quiz.setTeams(resizeTeams(teams, teams.length - 1))}
+            className="size-6 p-0"
+          >
+            −
+          </Button>
+          <span className="w-5 text-center font-mono text-sm text-slate-800">{teams.length}</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="모둠 수 늘리기"
+            disabled={locked || teams.length >= MAX_TEAMS}
+            onClick={() => quiz.setTeams(resizeTeams(teams, teams.length + 1))}
+            className="size-6 p-0"
+          >
+            +
+          </Button>
+        </div>
+
+        <ul className="flex flex-wrap gap-2">
+          {teams.map((team, index) => (
+            <li key={index}>
+              <input
+                type="text"
+                defaultValue={team}
+                disabled={locked}
+                onBlur={(event) => {
+                  const next = renameTeam(teams, index, event.target.value);
+                  quiz.setTeams(next);
+                }}
+                aria-label={`${index + 1}번째 모둠 이름`}
+                className="h-9 w-24 rounded-control border border-slate-300 px-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Card>
   );
 }
 
