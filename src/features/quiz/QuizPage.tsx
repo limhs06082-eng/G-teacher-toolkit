@@ -433,6 +433,23 @@ function QuestionRow({
           점
         </label>
 
+        {/* 배점과 나란히 둔다. 둘 다 '이 문제를 어떻게 낼 것인가'이고 숫자 하나다. */}
+        <label className="flex items-center gap-1 text-sm text-slate-600">
+          <input
+            type="number"
+            min={0}
+            step={5}
+            defaultValue={question.timeLimitSec}
+            onBlur={(event) => {
+              const seconds = Number.parseInt(event.target.value, 10);
+              onChange({ timeLimitSec: Number.isFinite(seconds) && seconds > 0 ? seconds : 0 });
+            }}
+            aria-label={`${index + 1}번 제한 시간(초). 0이면 제한 없음`}
+            className="h-8 w-16 rounded-control border border-slate-300 px-2 text-sm"
+          />
+          초
+        </label>
+
         <Button
           size="sm"
           variant="ghost"

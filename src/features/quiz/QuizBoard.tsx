@@ -1,6 +1,7 @@
 import { Check, Eye, EyeOff, Flag } from 'lucide-react';
 
 import { Button, cx, EmptyState } from '../../shared/ui';
+import { QuestionTimer } from './QuestionTimer';
 import { correctChoiceText, QUESTION_TYPE_LABELS } from './quizCore';
 import { useSessionResponses } from './session/useSessionResponses';
 import { useQuiz } from './useQuiz';
@@ -48,6 +49,15 @@ export function QuizBoard() {
           {run.questionIndex + 1} / {runningSet.questions.length}
         </span>
         <span className="text-board-sm text-slate-500">{question.points}점</span>
+
+        {/* 제한 시간이 없는 문항(0)에는 아무것도 안 그린다. */}
+        <div className="ml-auto">
+          <QuestionTimer
+            questionId={question.id}
+            timeLimitSec={question.timeLimitSec}
+            revealed={run.revealed}
+          />
+        </div>
       </div>
 
       <h2 className="text-board-lg font-black text-slate-900">{question.text}</h2>
