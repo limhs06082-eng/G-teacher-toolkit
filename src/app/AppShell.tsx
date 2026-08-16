@@ -1,7 +1,8 @@
-import { Settings } from 'lucide-react';
+import { School, Settings } from 'lucide-react';
 import { Suspense } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 
+import { siblingAppHref, SIBLING_APP_LABEL } from '../shared/siblingApp';
 import { useToolkit } from '../shared/state/ToolkitDataProvider';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FEATURE_NAV } from './navigation';
@@ -10,6 +11,7 @@ import { PageLoader } from './PageLoader';
 /** 공통 레이아웃. 1단계와 달리 학급 전환이 없어 헤더가 단순하다. */
 export function AppShell() {
   const { data } = useToolkit();
+  const siblingHref = siblingAppHref();
   const { schoolName, grade, classNo } = data.profile;
   const context = [schoolName, grade === '' ? '' : `${grade}학년`, classNo === '' ? '' : `${classNo}반`]
     .filter((part) => part !== '')
@@ -46,6 +48,21 @@ export function AppShell() {
                 <span className="hidden md:inline">{label}</span>
               </NavLink>
             ))}
+
+            {/*
+              짝이 되는 앱으로 넘어가는 버튼.
+              src/shared/siblingApp.ts에 주소를 넣으면 나타나고, 비어 있으면 숨는다.
+              같은 탭에서 넘어간다 — 앱마다 창을 쌓지 않는다.
+            */}
+            {siblingHref === null ? null : (
+              <a
+                href={siblingHref}
+                className="ml-2 inline-flex items-center gap-1.5 rounded-control border border-slate-300 px-2.5 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                <School className="size-4 shrink-0 text-slate-400" aria-hidden />
+                <span className="hidden lg:inline">{SIBLING_APP_LABEL}</span>
+              </a>
+            )}
 
             <NavLink
               to="/settings"
