@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import type { QuizQuestion, QuizSet } from '../../shared/domain/types';
 import { Badge, Button, Card, ConfirmDialog, cx, EmptyState, Modal, Tabs, useToast } from '../../shared/ui';
 import { questionStats, QUESTION_TYPE_LABELS } from './quizCore';
+import { TitleSubjectFields } from '../../shared/TitleSubjectFields';
 import { QuizSessionPanel } from './QuizSessionPanel';
 import { MAX_TEAMS, MIN_TEAMS, renameTeam, resizeTeams } from './teamsCore';
 import { useQuiz } from './useQuiz';
@@ -111,7 +112,11 @@ export default function QuizPage() {
                         />
                       }
                     >
-                      <p className="text-sm text-slate-500">문제 {set.questions.length}개</p>
+                      {/* 제목은 h2 안이라 truncate된다. 과목 배지는 본문 첫 줄에 둔다. */}
+                      <p className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                        {set.subject === '' ? null : <Badge tone="neutral">{set.subject}</Badge>}
+                        <span>문제 {set.questions.length}개</span>
+                      </p>
 
                       {validation.issues.length > 0 ? (
                         <p className="mt-2 flex items-start gap-1.5 text-sm text-warning-700">
@@ -338,7 +343,7 @@ function QuestionEditor({
     <Modal
       open
       onClose={onClose}
-      title={`${set.title} 문제 편집`}
+      title={`${set.title} 편집`}
       size="xl"
       footer={
         <Button variant="primary" onClick={onClose}>
@@ -347,6 +352,14 @@ function QuestionEditor({
       }
     >
       <div className="flex flex-col gap-3">
+        <TitleSubjectFields
+          title={set.title}
+          subject={set.subject}
+          titleLabel="문제 세트 이름"
+          onTitleChange={(value) => quiz.renameSet(set.id, value)}
+          onSubjectChange={(value) => quiz.setQuizSubject(set.id, value)}
+        />
+
         <div className="flex flex-wrap gap-2">
           {(Object.keys(QUESTION_TYPE_LABELS) as Array<QuizQuestion['type']>).map((type) => (
             <Button key={type} size="sm" icon={Plus} onClick={() => quiz.addQuestion(set.id, type)}>

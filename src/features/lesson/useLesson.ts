@@ -7,6 +7,7 @@ import {
 } from '../../shared/domain/factories';
 import type { LessonStage, LessonTemplate } from '../../shared/domain/types';
 import { useToolkit } from '../../shared/state/ToolkitDataProvider';
+import { normalizeSubject } from '../../shared/subjects';
 import { moveStage, nextIndex, prevIndex, progressOf, type LessonProgress } from './lessonCore';
 
 /** 수업 진행판 화면과 저장소를 잇는 훅. */
@@ -19,6 +20,8 @@ export interface LessonView {
 
   addTemplate: (title: string, withStarter: boolean) => string;
   renameTemplate: (templateId: string, title: string) => void;
+  /** 과목은 비워도 된다. 과목이 없는 수업 흐름이 정상이다. */
+  setTemplateSubject: (templateId: string, subject: string) => void;
   deleteTemplate: (templateId: string) => Promise<void>;
   updateStage: (templateId: string, stageId: string, patch: Partial<LessonStage>) => void;
   addStage: (templateId: string, phase: LessonStage['phase']) => void;
@@ -87,6 +90,16 @@ export function useLesson(): LessonView {
       const trimmed = title.trim();
       if (trimmed === '') return;
       patchTemplate(templateId, (template) => ({ ...template, title: trimmed }));
+    },
+    [patchTemplate],
+  );
+
+  const setTemplateSubject = useCallback(
+    (templateId: string, subject: string): void => {
+      patchTemplate(templateId, (template) => ({
+        ...template,
+        subject: normalizeSubject(subject),
+      }));
     },
     [patchTemplate],
   );
@@ -213,6 +226,7 @@ export function useLesson(): LessonView {
     doneStageIds: data.lessonRun?.doneStageIds ?? [],
     addTemplate,
     renameTemplate,
+    setTemplateSubject,
     deleteTemplate,
     updateStage,
     addStage,

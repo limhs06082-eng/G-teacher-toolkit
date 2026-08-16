@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import type { LessonPhase, LessonStage, LessonTemplate } from '../../shared/domain/types';
+import { TitleSubjectFields } from '../../shared/TitleSubjectFields';
 import { Badge, Button, Card, ConfirmDialog, cx, EmptyState, Modal, useToast } from '../../shared/ui';
 import { MODE_LABELS, PHASE_LABELS, totalMinutes } from './lessonCore';
 import { useLesson } from './useLesson';
@@ -121,8 +122,14 @@ export default function LessonPage() {
                   />
                 }
               >
-                <p className="text-sm text-slate-500">
-                  {template.stages.length}단계 · 총 {totalMinutes(template)}분
+                {/* 제목은 h2 안이라 truncate된다. 과목 배지는 본문 첫 줄에 둔다. */}
+                <p className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                  {template.subject === '' ? null : (
+                    <Badge tone="neutral">{template.subject}</Badge>
+                  )}
+                  <span>
+                    {template.stages.length}단계 · 총 {totalMinutes(template)}분
+                  </span>
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Button
@@ -198,7 +205,7 @@ function StageEditor({
     <Modal
       open
       onClose={onClose}
-      title={`${template.title} 단계 편집`}
+      title={`${template.title} 편집`}
       size="xl"
       footer={
         <Button variant="primary" onClick={onClose}>
@@ -207,6 +214,14 @@ function StageEditor({
       }
     >
       <div className="flex flex-col gap-3">
+        <TitleSubjectFields
+          title={template.title}
+          subject={template.subject}
+          titleLabel="수업 흐름 이름"
+          onTitleChange={(value) => lesson.renameTemplate(template.id, value)}
+          onSubjectChange={(value) => lesson.setTemplateSubject(template.id, value)}
+        />
+
         <div className="flex flex-wrap gap-2">
           {PHASES.map((phase) => (
             <Button

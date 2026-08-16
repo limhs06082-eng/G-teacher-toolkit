@@ -37,8 +37,8 @@
 | 기능 | 무엇이 안 되나 | 상태 |
 |---|---|---|
 | ~~`useQuiz.setTeams`~~ | 팀이 `1모둠~4모둠` 넷으로 고정이었다 | **완료 2026-08-15** |
-| `useQuiz.renameSet` | 퀴즈 세트 이름을 만든 뒤 못 고친다 | 중간 |
-| `useLesson.renameTemplate` | 수업 흐름 템플릿 이름을 만든 뒤 못 고친다 | 중간 |
+| ~~`useQuiz.renameSet`~~ | 퀴즈 세트 이름을 만든 뒤 못 고쳤다 | **완료 2026-08-16** |
+| ~~`useLesson.renameTemplate`~~ | 수업 흐름 이름을 만든 뒤 못 고쳤다 | **완료 2026-08-16** |
 | `useLesson.goTo` | 수업 중 특정 단계로 바로 못 간다. 앞뒤로만 옮긴다 | 낮음 — 만들지 않기를 권함 |
 
 ### A-1. 팀 고정이 왜 높은가
@@ -57,7 +57,7 @@
 | 필드 | 문제 | 상태 |
 |---|---|---|
 | ~~`QuizQuestion.timeLimitSec`~~ | 값은 들어오는데 세는 화면이 없었다 | **완료 2026-08-15** |
-| `LessonTemplate.subject` · `QuizSet.subject` | **과목.** 입력할 곳도 보여 줄 곳도 없다 | 중간 |
+| ~~`LessonTemplate.subject` · `QuizSet.subject`~~ | 입력할 곳도 보여 줄 곳도 없었다 | **완료 2026-08-16** |
 | `LessonRun.startedAt` · `QuizRun.startedAt` | 시작 시각을 적기만 하고 안 쓴다 | 낮음 — 만들지 않기를 권함 |
 
 ### B-1. 제한 시간이 왜 높은가
@@ -104,6 +104,27 @@
 창에도 퍼진다. 새로 고치면 처음으로 돌아가는 것이 맞다.
 
 설계: [`../superpowers/specs/2026-08-15-quiz-teams-and-timer-design.md`](../superpowers/specs/2026-08-15-quiz-teams-and-timer-design.md)
+
+## 2026-08-16에 고친 것 — 남은 것은 '낮음' 둘뿐
+
+**이름 고치기와 과목**을 함께 넣었다. 둘은 한 벌이다 — 이름과 과목은
+"이게 무슨 자료인가"를 말하는 이름표라 고치는 자리도 보이는 자리도 같아야 한다.
+
+편집 모달 맨 위에 넣었다. 카드에 버튼을 더하지 않았다 — 이미 삭제·시작·편집
+셋이 있어서 넷째를 넣으면 좁은 화면에서 줄이 바뀐다. 모달 제목도
+`단계 편집`·`문제 편집` → `편집`으로 넓혔다.
+
+`renameTemplate`을 `updateInfo(id, {title?, subject?})`로 합치지 않았다.
+**이름은 비면 안 고치고 과목은 비우면 지운다.** 규칙이 다른 둘을 한 함수에
+넣으면 어느 쪽 규칙이 적용되는지 부르는 쪽에서 알 수 없다.
+
+과목 배지는 카드 제목이 아니라 **본문 첫 줄**에 둔다. `Card`의 제목은
+`h2`에 `truncate`가 걸려 있어 배지를 넣으면 잘린다.
+
+설계: [`../superpowers/specs/2026-08-16-title-and-subject-design.md`](../superpowers/specs/2026-08-16-title-and-subject-design.md)
+
+**남은 것은 `goTo`와 `startedAt`뿐이고, 둘 다 만들지 않기를 권한다.**
+단계 이동은 앞뒤 버튼으로 충분하고, 시작 시각은 화면에 숫자만 늘린다.
 
 ## 점검에 쓴 방법
 

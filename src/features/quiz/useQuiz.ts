@@ -4,6 +4,7 @@ import { createQuestion, createQuizSet } from '../../shared/domain/factories';
 import { createId } from '../../shared/ids';
 import type { QuizQuestion, QuizResult, QuizSet } from '../../shared/domain/types';
 import { useToolkit } from '../../shared/state/ToolkitDataProvider';
+import { normalizeSubject } from '../../shared/subjects';
 import { createRunState, teamScores, toResult, validateQuizSet, type QuizRunState } from './quizCore';
 import { normalizeTeams, teamsOrDefault } from './teamsCore';
 import { mergeAutoGrading } from './session/sessionCore';
@@ -29,6 +30,8 @@ export interface QuizView {
 
   addSet: (title: string) => string;
   renameSet: (setId: string, title: string) => void;
+  /** 과목은 비워도 된다. 과목이 없는 문제 세트가 정상이다. */
+  setQuizSubject: (setId: string, subject: string) => void;
   deleteSet: (setId: string) => Promise<void>;
   addQuestion: (setId: string, type: QuizQuestion['type']) => void;
   updateQuestion: (setId: string, questionId: string, patch: Partial<QuizQuestion>) => void;
@@ -121,6 +124,13 @@ export function useQuiz(): QuizView {
       return set.id;
     },
     [update],
+  );
+
+  const setQuizSubject = useCallback(
+    (setId: string, subject: string): void => {
+      patchSet(setId, (set) => ({ ...set, subject: normalizeSubject(subject) }));
+    },
+    [patchSet],
   );
 
   const renameSet = useCallback(
@@ -319,6 +329,7 @@ export function useQuiz(): QuizView {
     scores,
     addSet,
     renameSet,
+    setQuizSubject,
     deleteSet,
     addQuestion,
     updateQuestion,
