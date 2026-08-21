@@ -20,7 +20,7 @@
  * 환경 변수를 쓰지 않는 이유: fork한 직후 아무 설정 없이 Vercel에 올려도
  * 바로 동작해야 하기 때문입니다. firebaseConfig.ts와 같은 방침입니다.
  */
-export const SIBLING_APP_URL = '';
+export const SIBLING_APP_URL = 'https://g-classroom-suite.vercel.app';
 
 /** 버튼에 적히는 이름. */
 export const SIBLING_APP_LABEL = '학급 운영';
